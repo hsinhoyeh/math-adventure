@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Math Adventure! ✈️📦🚌</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root { --purple:#6c63ff; --purple-light:#f0eeff; --green:#22c55e; --red:#ef4444; --orange:#f97316; }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:'Nunito',system-ui,sans-serif; background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); min-height:100vh; display:flex; align-items:center; justify-content:center; padding:12px; }
+    body.zh { line-height:1.4; }
+
+    .card { background:#fff; border-radius:28px; padding:28px 24px; max-width:580px; width:100%; box-shadow:0 25px 70px rgba(0,0,0,.35); position:relative; overflow:hidden; min-height:520px; }
+    .screen { display:none; flex-direction:column; }
+    .screen.active { display:flex; }
+
+    /* ── lang switch ── */
+    .lang-wrap { position:absolute; top:14px; right:18px; z-index:20; display:flex; align-items:center; gap:8px; }
+    .lang-switch { display:flex; background:#f3f4f6; border-radius:999px; padding:3px; }
+    .lang-btn { border:none; background:transparent; padding:5px 11px; border-radius:999px; font-weight:700; cursor:pointer; color:#374151; font-size:.82rem; font-family:inherit; transition:all .15s; }
+    .lang-btn.active { background:var(--purple); color:#fff; }
+
+    /* ── zhuyin ── */
+    .zy { display:inline-flex; align-items:center; line-height:1; vertical-align:middle; }
+    .zy-c { display:inline-block; }
+    .zy-z { display:inline-flex; align-items:center; margin-left:1px; }
+    .zy-z.zy-neu { flex-direction:column; align-items:center; }
+    .zy-b { writing-mode:vertical-lr; text-orientation:upright; font-size:.38em; font-weight:700; color:#d84315; line-height:.92; letter-spacing:-.5px; user-select:none; }
+    .zy-t { font-size:.32em; font-weight:700; color:#d84315; line-height:1; user-select:none; }
+    .zy-neu .zy-t { margin-bottom:-1px; }
+
+    /* ── ticker ── */
+    .ticker { overflow:hidden; height:52px; position:relative; margin-bottom:10px; }
+    .ticker-v { position:absolute; font-size:2.4rem; top:4px; animation:drive 5s linear infinite; }
+    @keyframes drive { from{left:-80px} to{left:110%} }
+
+    /* ── home ── */
+    #s-home { padding-top:10px; }
+    .home-title { font-size:2.2rem; font-weight:900; color:#1e1b4b; text-align:center; margin-bottom:4px; }
+    .home-sub   { font-size:.95rem; color:#6b7280; text-align:center; margin-bottom:20px; }
+    .label-row  { font-size:.9rem; font-weight:700; color:#4b5563; margin-bottom:10px; }
+    .theme-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:20px; }
+    .theme-card { border-radius:18px; padding:16px 8px 12px; text-align:center; cursor:pointer; border:3px solid #e5e7eb; background:#f9fafb; transition:all .18s; user-select:none; }
+    .theme-card:hover  { border-color:var(--purple); transform:translateY(-2px); }
+    .theme-card.active { border-color:var(--purple); background:var(--purple-light); }
+    .theme-card .big  { font-size:2.4rem; display:block; margin-bottom:6px; }
+    .theme-card .name { font-size:.85rem; font-weight:800; color:#374151; }
+    .diff-row { display:flex; gap:8px; margin-bottom:20px; }
+    .diff-btn { flex:1; padding:10px 4px; border-radius:50px; border:2px solid #e5e7eb; background:#fff; font-family:inherit; font-size:.9rem; font-weight:700; cursor:pointer; transition:all .18s; }
+    .diff-btn:hover  { border-color:var(--purple); }
+    .diff-btn.active { background:var(--purple); color:#fff; border-color:var(--purple); }
+    .name-input { width:100%; padding:13px 18px; border-radius:50px; border:2px solid #e5e7eb; font-family:inherit; font-size:1.05rem; font-weight:600; text-align:center; outline:none; margin-bottom:20px; transition:border-color .18s; }
+    .name-input:focus { border-color:var(--purple); }
+    .play-btn { width:100%; padding:17px; border-radius:50px; border:none; background:linear-gradient(135deg,#6c63ff,#a855f7); color:#fff; font-family:inherit; font-size:1.25rem; font-weight:900; cursor:pointer; margin-bottom:12px; transition:all .18s; }
+    .play-btn:hover { transform:translateY(-2px); box-shadow:0 8px 28px rgba(108,99,255,.45); }
+    .text-link { text-align:center; color:var(--purple); font-size:.9rem; font-weight:700; cursor:pointer; }
+    .text-link:hover { text-decoration:underline; }
+
+    /* ── game ── */
+    .game-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+    .score-label { font-size:1.1rem; font-weight:900; color:var(--purple); }
+    .streak-badge { display:inline-block; background:#fef3c7; color:#b45309; border-radius:50px; padding:3px 10px; font-size:.8rem; font-weight:800; margin-top:3px; min-height:20px; }
+    .q-counter { font-size:.9rem; font-weight:700; color:#6b7280; }
+    .timer-wrap { position:relative; width:58px; height:58px; }
+    .timer-svg  { transform:rotate(-90deg); }
+    .t-bg   { fill:none; stroke:#f3f4f6; stroke-width:5; }
+    .t-fill { fill:none; stroke:var(--purple); stroke-width:5; stroke-linecap:round; transition:stroke-dashoffset 1s linear,stroke .3s; }
+    .t-fill.warn   { stroke:var(--orange); }
+    .t-fill.danger { stroke:var(--red); }
+    .timer-num { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:1.15rem; font-weight:900; color:#1f2937; }
+    .timer-num.danger { color:var(--red); }
+    .prog-wrap { background:#f3f4f6; border-radius:50px; height:8px; margin-bottom:18px; overflow:hidden; }
+    .prog-bar  { height:100%; background:linear-gradient(90deg,var(--purple),#a855f7); border-radius:50px; transition:width .4s ease; }
+
+    /* scene box */
+    .scene-box { border-radius:20px; padding:18px 16px; text-align:center; margin-bottom:16px; min-height:110px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; transition:background .3s; position:relative; }
+    .scene-visuals { font-size:1.6rem; line-height:1.6; }
+    .story-text    { font-size:1rem; font-weight:700; color:#1e3a5f; line-height:1.55; }
+    .speak-btn { position:absolute; top:8px; right:10px; background:rgba(255,255,255,.85); border:1.5px solid #e5e7eb; border-radius:50%; width:34px; height:34px; font-size:.9rem; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .15s; }
+    .speak-btn:hover { background:#fff; border-color:var(--purple); }
+    .speak-btn.speaking { animation:speakPulse .7s infinite; }
+    @keyframes speakPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.2)} }
+
+    .question-text { font-size:1.1rem; font-weight:800; color:#111827; text-align:center; margin-bottom:16px; line-height:1.5; }
+    .ans-grid { display:grid; grid-template-columns:1fr 1fr; gap:11px; margin-bottom:14px; }
+    .ans-btn { padding:18px 12px; border-radius:18px; border:3px solid #e5e7eb; background:#fff; font-family:inherit; font-size:1.35rem; font-weight:900; cursor:pointer; transition:all .18s; color:#1f2937; }
+    .ans-btn:hover:not(:disabled) { border-color:var(--purple); background:var(--purple-light); transform:scale(1.03); }
+    .ans-btn.correct { border-color:var(--green); background:#dcfce7; color:#14532d; animation:popGreen .45s; }
+    .ans-btn.wrong   { border-color:var(--red);   background:#fee2e2; color:#7f1d1d; animation:shake .4s; }
+    .ans-btn:disabled { cursor:default; }
+    .ans-btn.faded   { opacity:.28; }
+    @keyframes popGreen { 0%,100%{transform:scale(1)} 50%{transform:scale(1.06)} }
+    @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-7px)} 75%{transform:translateX(7px)} }
+    .hint-row { display:flex; justify-content:space-between; align-items:center; }
+    .hint-info { font-size:.85rem; font-weight:700; color:#9ca3af; }
+    .hint-btn  { background:#fff7ed; color:#c2410c; border:1.5px solid #fed7aa; padding:6px 14px; border-radius:50px; font-family:inherit; font-size:.82rem; font-weight:800; cursor:pointer; transition:all .15s; }
+    .hint-btn:hover:not(:disabled) { background:#ffedd5; }
+    .hint-btn:disabled { opacity:.4; cursor:default; }
+
+    /* ── overlay ── */
+    .overlay { position:fixed; inset:0; background:rgba(0,0,0,.55); display:none; align-items:center; justify-content:center; z-index:200; padding:20px; }
+    .overlay.active { display:flex; }
+    .fb-box { background:#fff; border-radius:26px; padding:34px 28px; text-align:center; max-width:360px; width:100%; animation:popIn .3s; }
+    @keyframes popIn { from{transform:scale(.72);opacity:0} to{transform:scale(1);opacity:1} }
+    .fb-icon  { font-size:4rem; margin-bottom:10px; }
+    .fb-title { font-size:1.75rem; font-weight:900; margin-bottom:8px; }
+    .fb-expl  { font-size:.95rem; color:#4b5563; font-weight:600; line-height:1.55; margin-bottom:22px; }
+    .next-btn { padding:14px 32px; border-radius:50px; border:none; font-family:inherit; font-size:1.05rem; font-weight:800; cursor:pointer; color:#fff; transition:all .18s; }
+    .next-btn.ok { background:var(--green); }
+    .next-btn.oh { background:var(--orange); }
+    .next-btn:hover { transform:translateY(-2px); box-shadow:0 6px 18px rgba(0,0,0,.2); }
+
+    /* ── results ── */
+    .results-center { text-align:center; margin-bottom:22px; }
+    .stars-row { font-size:3.2rem; margin-bottom:6px; }
+    .final-pts { font-size:3.2rem; font-weight:900; color:var(--purple); }
+    .final-sub { font-size:.9rem; color:#6b7280; font-weight:600; }
+    .stats-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:22px; }
+    .stat-box { background:#f9fafb; border-radius:16px; padding:16px 10px; text-align:center; }
+    .stat-val { font-size:1.8rem; font-weight:900; color:#111827; }
+    .stat-lbl { font-size:.78rem; font-weight:700; color:#9ca3af; margin-top:3px; }
+    .btn-col  { display:flex; flex-direction:column; gap:10px; }
+    .outline-btn { width:100%; padding:14px; border-radius:50px; border:2.5px solid var(--purple); background:#fff; color:var(--purple); font-family:inherit; font-size:1rem; font-weight:800; cursor:pointer; transition:all .18s; }
+    .outline-btn:hover { background:var(--purple-light); }
+
+    /* ── leaderboard ── */
+    .lb-header { display:flex; align-items:center; gap:12px; margin-bottom:18px; }
+    .back-btn  { background:#f3f4f6; border:none; border-radius:50%; width:38px; height:38px; font-size:1.2rem; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background .15s; }
+    .back-btn:hover { background:#e5e7eb; }
+    .lb-title { font-size:1.55rem; font-weight:900; color:#1e1b4b; }
+    .lb-tabs { display:flex; gap:8px; margin-bottom:16px; }
+    .lb-tab  { flex:1; padding:9px 4px; border-radius:50px; border:2px solid #e5e7eb; background:#fff; font-family:inherit; font-size:.85rem; font-weight:800; cursor:pointer; transition:all .15s; }
+    .lb-tab:hover  { border-color:var(--purple); }
+    .lb-tab.active { background:var(--purple); color:#fff; border-color:var(--purple); }
+    .lb-list { list-style:none; max-height:340px; overflow-y:auto; }
+    .lb-item { display:flex; align-items:center; gap:10px; padding:11px 14px; border-radius:14px; margin-bottom:7px; background:#f9fafb; }
+    .lb-item.gold   { background:#fefce8; }
+    .lb-item.silver { background:#f8fafc; }
+    .lb-item.bronze { background:#fff7ed; }
+    .lb-item.me     { outline:2.5px solid var(--purple); }
+    .lb-rank { width:28px; font-size:1.1rem; font-weight:900; }
+    .lb-name { flex:1; font-weight:800; font-size:.95rem; color:#1f2937; }
+    .lb-theme { font-size:1.1rem; }
+    .lb-pts  { font-weight:900; color:var(--purple); font-size:.95rem; }
+    .lb-empty { text-align:center; color:#d1d5db; font-size:1rem; font-weight:700; padding:40px 0; }
+
+    /* ── animations ── */
+    .score-pop { position:absolute; font-size:1.6rem; font-weight:900; color:var(--green); pointer-events:none; animation:rise 1s ease-out forwards; z-index:100; }
+    @keyframes rise { 0%{opacity:1;transform:translateY(0)} 100%{opacity:0;transform:translateY(-60px)} }
+    .confetti { position:fixed; width:9px; height:9px; border-radius:2px; pointer-events:none; z-index:999; animation:fall linear forwards; }
+    @keyframes fall { 0%{opacity:1;transform:translateY(-20px) rotate(0deg)} 100%{opacity:0;transform:translateY(100vh) rotate(720deg)} }
+
+    @media (max-width:420px) {
+      .card { padding:20px 16px; }
+      .home-title { font-size:1.75rem; }
+      .ans-btn { font-size:1.15rem; padding:14px 8px; }
+    }
+  </style>
+</head>
+<body>
+<div class="card" id="card">
+
+  <!-- persistent lang switch + voice toggle -->
+  <div class="lang-wrap">
+    <div class="lang-switch">
+      <button class="lang-btn" data-lang="en"    onclick="I18N.setLang('en')">EN</button>
+      <button class="lang-btn" data-lang="zh-tw" onclick="I18N.setLang('zh-tw')">中文</button>
+    </div>
+  </div>
+
+  <!-- HOME -->
+  <div class="screen active" id="s-home">
+    <div class="ticker"><span class="ticker-v" id="ticker-v">✈️</span></div>
+    <h1 class="home-title" data-i18n="appTitle">🌟 Math Adventure!</h1>
+    <p  class="home-sub"   data-i18n="subtitle">Fun math puzzles for young explorers ✨</p>
+    <input class="name-input" id="name-input" placeholder="What's your name?" maxlength="20" autocomplete="off">
+    <p class="label-row" data-i18n="chooseAdv">🗺️ Choose your adventure:</p>
+    <div class="theme-grid">
+      <div class="theme-card active" data-t="airline" onclick="pickTheme(this,'airline')">
+        <span class="big">✈️</span><span class="name" data-i18n="thAirline">Airline</span>
+      </div>
+      <div class="theme-card" data-t="cargo" onclick="pickTheme(this,'cargo')">
+        <span class="big">🚛</span><span class="name" data-i18n="thCargo">Cargo</span>
+      </div>
+      <div class="theme-card" data-t="bus" onclick="pickTheme(this,'bus')">
+        <span class="big">🚌</span><span class="name" data-i18n="thBus">City Bus</span>
+      </div>
+    </div>
+    <p class="label-row" data-i18n="chooseDiff">🎯 Choose difficulty:</p>
+    <div class="diff-row">
+      <button class="diff-btn active" data-d="easy"   onclick="pickDiff(this,'easy')"   data-i18n="dEasy">🌱 Easy</button>
+      <button class="diff-btn"        data-d="medium" onclick="pickDiff(this,'medium')" data-i18n="dMedium">⭐ Medium</button>
+      <button class="diff-btn"        data-d="hard"   onclick="pickDiff(this,'hard')"   data-i18n="dHard">🔥 Hard</button>
+    </div>
+    <button class="play-btn" data-i18n="startBtn" onclick="startGame()">🚀 Start Adventure!</button>
+    <span class="text-link" data-i18n="lbLink" onclick="openLB()">🏆 View Leaderboard</span>
+  </div>
+
+  <!-- GAME -->
+  <div class="screen" id="s-game">
+    <div class="game-header">
+      <div>
+        <div class="score-label" id="g-score">⭐ 0 pts</div>
+        <div class="streak-badge" id="g-streak"></div>
+      </div>
+      <div class="q-counter" id="g-qnum">Q 1 / 10</div>
+      <div class="timer-wrap">
+        <svg class="timer-svg" viewBox="0 0 58 58" width="58" height="58">
+          <circle class="t-bg"   cx="29" cy="29" r="24"/>
+          <circle class="t-fill" cx="29" cy="29" r="24" id="t-arc" stroke-dasharray="150.8" stroke-dashoffset="0"/>
+        </svg>
+        <div class="timer-num" id="t-num">30</div>
+      </div>
+    </div>
+    <div class="prog-wrap"><div class="prog-bar" id="g-prog" style="width:10%"></div></div>
+    <div class="scene-box" id="g-scene">
+      <button class="speak-btn" id="speak-btn" onclick="speakQ()" title="Read aloud">🔊</button>
+      <div class="scene-visuals" id="g-visuals"></div>
+      <div class="story-text"   id="g-story"></div>
+    </div>
+    <div class="question-text" id="g-question"></div>
+    <div class="ans-grid">
+      <button class="ans-btn" id="a0" onclick="pick(0)"></button>
+      <button class="ans-btn" id="a1" onclick="pick(1)"></button>
+      <button class="ans-btn" id="a2" onclick="pick(2)"></button>
+      <button class="ans-btn" id="a3" onclick="pick(3)"></button>
+    </div>
+    <div class="hint-row">
+      <span class="hint-info" id="g-hint-info"></span>
+      <button class="hint-btn" id="g-hint-btn" data-i18n="hintBtn" onclick="useHint()">💡 50/50 Hint</button>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="screen" id="s-results">
+    <div class="results-center">
+      <div class="stars-row" id="r-stars"></div>
+      <div class="final-pts"  id="r-pts">0</div>
+      <div class="final-sub"  id="r-sub" data-i18n="ptsSuffix">points earned!</div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-box"><div class="stat-val" id="r-correct">0</div><div class="stat-lbl" data-i18n="statCorrect">Correct</div></div>
+      <div class="stat-box"><div class="stat-val" id="r-acc">0%</div><div class="stat-lbl" data-i18n="statAcc">Accuracy</div></div>
+      <div class="stat-box"><div class="stat-val" id="r-avg">0s</div><div class="stat-lbl" data-i18n="statTime">Avg Time</div></div>
+      <div class="stat-box"><div class="stat-val" id="r-streak">0</div><div class="stat-lbl" data-i18n="statStreak">Best Streak</div></div>
+    </div>
+    <div class="btn-col">
+      <button class="play-btn"    data-i18n="playAgain"  onclick="startGame()">🔄 Play Again</button>
+      <button class="outline-btn" data-i18n="changeSet"  onclick="show('home')">🏠 Change Settings</button>
+      <span class="text-link" data-i18n="lbLink" onclick="openLB()" style="margin-top:4px">🏆 Leaderboard</span>
+    </div>
+  </div>
+
+  <!-- LEADERBOARD -->
+  <div class="screen" id="s-lb">
+    <div class="lb-header">
+      <button class="back-btn" onclick="show('home')">←</button>
+      <span class="lb-title" data-i18n="lbTitle">🏆 Leaderboard</span>
+    </div>
+    <div class="lb-tabs">
+      <button class="lb-tab active" data-i18n="dEasy"   onclick="lbTab(this,'easy')">🌱 Easy</button>
+      <button class="lb-tab"        data-i18n="dMedium" onclick="lbTab(this,'medium')">⭐ Medium</button>
+      <button class="lb-tab"        data-i18n="dHard"   onclick="lbTab(this,'hard')">🔥 Hard</button>
+    </div>
+    <ul class="lb-list" id="lb-list"></ul>
+  </div>
+</div>
+
+<!-- FEEDBACK OVERLAY -->
+<div class="overlay" id="overlay">
+  <div class="fb-box">
+    <div class="fb-icon"  id="fb-icon"></div>
+    <div class="fb-title" id="fb-title"></div>
+    <div class="fb-expl"  id="fb-expl"></div>
+    <button class="next-btn" id="fb-btn" onclick="nextQ()">Next →</button>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════
+// ZH — Bopomofo annotator
+// ════════════════════════════════════════════════════
+(function () {
+  const CHARS = {
+    // ── code-quest-kids base ──
+    "程":"ㄔㄥˊ","式":"ㄕˋ","冒":"ㄇㄠˋ","險":"ㄒㄧㄢˇ","小":"ㄒㄧㄠˇ",
+    "高":"ㄍㄠ","手":"ㄕㄡˇ","怎":"ㄗㄣˇ","麼":"˙ㄇㄜ","玩":"ㄨㄢˊ",
+    "選":"ㄒㄩㄢˇ","一":"ㄧ","個":"ㄍㄜˋ","任":"ㄖㄣˋ","務":"ㄨˋ",
+    "家":"ㄐㄧㄚ","更":"ㄍㄥ","改":"ㄍㄞˇ","排":"ㄆㄞˊ","行":"ㄒㄧㄥˊ",
+    "榜":"ㄅㄤˇ","還":"ㄏㄞˊ","沒":"ㄇㄟˊ","有":"ㄧㄡˇ","分":"ㄈㄣ",
+    "數":"ㄕㄨˋ","當":"ㄉㄤ","第":"ㄉㄧˋ","位":"ㄨㄟˋ","英":"ㄧㄥ",
+    "雄":"ㄒㄩㄥˊ","吧":"˙ㄅㄚ","返":"ㄈㄢˇ","回":"ㄏㄨㄟˊ","執":"ㄓˊ",
+    "重":"ㄔㄨㄥˊ","來":"ㄌㄞˊ","積":"ㄐㄧ","木":"ㄇㄨˋ","點":"ㄉㄧㄢˇ",
+    "下":"ㄒㄧㄚˋ","把":"ㄅㄚˇ","它":"ㄊㄚ","加":"ㄐㄧㄚ","到":"ㄉㄠˋ",
+    "裡":"ㄌㄧˇ","我":"ㄨㄛˇ","的":"˙ㄉㄜ","全":"ㄑㄩㄢˊ","部":"ㄅㄨˋ",
+    "清":"ㄑㄧㄥ","除":"ㄔㄨˊ","你":"ㄋㄧˇ","名":"ㄇㄧㄥˊ","字":"ㄗˋ",
+    "是":"ㄕˋ","出":"ㄔㄨ","發":"ㄈㄚ","成":"ㄔㄥˊ","功":"ㄍㄨㄥ",
+    "了":"˙ㄌㄜ","得":"ㄉㄜˊ","再":"ㄗㄞˋ","次":"ㄘˋ","組":"ㄗㄨˇ",
+    "合":"ㄏㄜˊ","按":"ㄢˋ","讓":"ㄖㄤˋ","機":"ㄐㄧ","人":"ㄖㄣˊ",
+    "動":"ㄉㄨㄥˋ","起":"ㄑㄧˇ","抵":"ㄉㄧˇ","達":"ㄉㄚˊ","終":"ㄓㄨㄥ",
+    "就":"ㄐㄧㄡˋ","贏":"ㄧㄥˊ","用":"ㄩㄥˋ","越":"ㄩㄝˋ","少":"ㄕㄠˇ",
+    "多":"ㄉㄨㄛ","懂":"ㄉㄨㄥˇ","為":"ㄨㄟˋ","員":"ㄩㄢˊ","打":"ㄉㄚˇ",
+    "造":"ㄗㄠˋ","向":"ㄒㄧㄤˋ","前":"ㄑㄧㄢˊ","走":"ㄗㄡˇ","左":"ㄗㄨㄛˇ",
+    "轉":"ㄓㄨㄢˇ","右":"ㄧㄡˋ","複":"ㄈㄨˋ","在":"ㄗㄞˋ","這":"ㄓㄜˋ",
+    "先":"ㄒㄧㄢ","些":"ㄒㄧㄝ","好":"ㄏㄠˇ","可":"ㄎㄜˇ","使":"ㄕˇ",
+    "步":"ㄅㄨˋ","旗":"ㄑㄧˊ","子":"˙ㄗ","彎":"ㄨㄢ","身":"ㄕㄣ",
+    "角":"ㄐㄧㄠˇ","繞":"ㄖㄠˋ","過":"ㄍㄨㄛˋ","路":"ㄌㄨˋ","力":"ㄌㄧˋ",
+    "量":"ㄌㄧㄤˋ","遠":"ㄩㄢˇ","精":"ㄐㄧㄥ","通":"ㄊㄨㄥ","與":"ㄩˇ",
+    "關":"ㄍㄨㄢ","卡":"ㄎㄚˇ","工":"ㄍㄨㄥ","具":"ㄐㄩˋ","然":"ㄖㄢˊ",
+    "後":"ㄏㄡˋ","格":"ㄍㄜˊ","面":"ㄇㄧㄢˋ","能":"ㄋㄥˊ","目":"ㄇㄨˋ",
+    "標":"ㄅㄧㄠ","拿":"ㄋㄚˊ","自":"ㄗˋ","提":"ㄊㄧˊ","示":"ㄕˋ",
+    "做":"ㄗㄨㄛˋ","看":"ㄎㄢˋ","老":"ㄌㄠˇ","師":"ㄕ","新":"ㄒㄧㄣ",
+    "增":"ㄗㄥ","請":"ㄑㄧㄥˇ","放":"ㄈㄤˋ","上":"ㄕㄤˋ","和":"ㄏㄜˊ",
+    "最":"ㄗㄨㄟˋ","佳":"ㄐㄧㄚ","解":"ㄐㄧㄝˇ","需":"ㄒㄩ","要":"ㄧㄠˋ",
+    "中":"ㄓㄨㄥ","文":"ㄨㄣˊ","單":"ㄉㄢ","完":"ㄨㄢˊ","大":"ㄉㄚˋ",
+    "已":"ㄧˇ","不":"ㄅㄨˋ","三":"ㄙㄢ","之":"ㄓ","城":"ㄔㄥˊ","市":"ㄕˋ",
+    "方":"ㄈㄤ","形":"ㄒㄧㄥˊ","接":"ㄐㄧㄝ","六":"ㄌㄧㄡˋ","節":"ㄐㄧㄝˊ",
+    "長":"ㄔㄤˊ","空":"ㄎㄨㄥ","乘":"ㄔㄥˊ","算":"ㄙㄨㄢˋ","二":"ㄦˋ",
+    "錢":"ㄑㄧㄢˊ","便":"ㄆㄧㄢˊ","宜":"ㄧˊ","極":"ㄐㄧˊ",
+    // ── bus/cargo from cqk ──
+    "公":"ㄍㄨㄥ","車":"ㄔㄜ","燈":"ㄉㄥ","光":"ㄍㄨㄤ","班":"ㄅㄢ",
+    "開":"ㄎㄞ","站":"ㄓㄢˋ","兩":"ㄌㄧㄤˇ","牌":"ㄆㄞˊ","載":"ㄗㄞˋ",
+    "客":"ㄎㄜˋ","線":"ㄒㄧㄢˋ","每":"ㄇㄟˇ","換":"ㄏㄨㄢˋ","顏":"ㄧㄢˊ",
+    "色":"ㄙㄜˋ","紅":"ㄏㄨㄥˊ","綠":"ㄌㄩˋ","黃":"ㄏㄨㄤˊ","號":"ㄏㄠˋ",
+    "對":"ㄉㄨㄟˋ","並":"ㄅㄧㄥˋ","他":"ㄊㄚ","始":"ㄕˇ",
+    "裝":"ㄓㄨㄤ","廠":"ㄔㄤˇ","輪":"ㄌㄨㄣˊ","四":"ㄙˋ","飛":"ㄈㄟ",
+    "架":"ㄐㄧㄚˋ","火":"ㄏㄨㄛˇ","零":"ㄌㄧㄥˊ","件":"ㄐㄧㄢˋ",
+    "海":"ㄏㄞˇ","洋":"ㄧㄤˊ","條":"ㄊㄧㄠˊ","魚":"ㄩˊ","游":"ㄧㄡˊ",
+    "吃":"ㄔ","都":"ㄉㄡ","群":"ㄑㄩㄣˊ","去":"ㄑㄩˋ",
+    "貨":"ㄏㄨㄛˋ","運":"ㄩㄣˋ","戰":"ㄓㄢˋ","送":"ㄙㄨㄥˋ",
+    "只":"ㄓˇ","價":"ㄐㄧㄚˋ","值":"ㄓˊ","箱":"ㄒㄧㄤ","滿":"ㄇㄢˇ",
+    "輕":"ㄑㄧㄥ","也":"ㄧㄝˇ","別":"ㄅㄧㄝˊ","寶":"ㄅㄠˇ","物":"ㄨˋ",
+    "太":"ㄊㄞˋ","夠":"ㄍㄡˋ","帶":"ㄉㄞˋ","限":"ㄒㄧㄢˋ","制":"ㄓˋ",
+    "內":"ㄋㄟˋ","主":"ㄓㄨˇ","題":"ㄊㄧˊ","同":"ㄊㄨㄥˊ",
+    // ── math-adventure additions ──
+    "學":"ㄒㄩㄝˊ","探":"ㄊㄢˋ","趣":"ㄑㄩˋ","難":"ㄋㄢˊ","度":"ㄉㄨˋ",
+    "普":"ㄆㄨˇ","困":"ㄎㄨㄣˋ","簡":"ㄐㄧㄢˇ","航":"ㄏㄤˊ",
+    "薩":"ㄙㄚˋ","拉":"ㄌㄚ","登":"ㄉㄥ","口":"ㄎㄡˇ",
+    "共":"ㄍㄨㄥˋ","幾":"ㄐㄧˇ","李":"ㄌㄧˇ","頭":"ㄊㄡˊ","等":"ㄉㄥˇ",
+    "艙":"ㄘㄤ","經":"ㄐㄧㄥ","濟":"ㄐㄧˋ","落":"ㄌㄨㄛˋ","降":"ㄐㄧㄤˋ",
+    "麥":"ㄇㄞˋ","克":"ㄎㄜˋ","庫":"ㄎㄨˋ","倉":"ㄘㄤ","斤":"ㄐㄧㄣ",
+    "費":"ㄈㄟˋ","配":"ㄆㄟˋ","蘿":"ㄌㄨㄛˊ","莎":"ㄕㄚ","司":"ㄙ",
+    "票":"ㄆㄧㄠˋ","里":"ㄌㄧˇ","速":"ㄙㄨˋ","正":"ㄓㄥˋ","確":"ㄑㄩㄝˋ",
+    "率":"ㄌㄩˋ","均":"ㄐㄩㄣ","平":"ㄆㄧㄥˊ","連":"ㄌㄧㄢˊ","勝":"ㄕㄥˋ",
+    "設":"ㄕㄜˋ","定":"ㄉㄧㄥˋ","超":"ㄔㄠ","級":"ㄐㄧˊ","棒":"ㄅㄤˋ",
+    "繼":"ㄐㄧˋ","續":"ㄒㄩˋ","油":"ㄧㄡˊ","答":"ㄉㄚˊ","現":"ㄒㄧㄢˋ",
+    "總":"ㄗㄨㄥˇ","座":"ㄗㄨㄛˋ","今":"ㄐㄧㄣ","天":"ㄊㄧㄢ","又":"ㄧㄡˋ",
+    "台":"ㄊㄞˊ","批":"ㄆㄧ","包":"ㄅㄠ","裹":"ㄍㄨㄛˇ","損":"ㄙㄨㄣˇ",
+    "壞":"ㄏㄨㄞˋ","退":"ㄊㄨㄟˋ","其":"ㄑㄧˊ","停":"ㄊㄧㄥˊ","靠":"ㄎㄠˋ",
+    "波":"ㄅㄛ","音":"ㄧㄣ","約":"ㄩㄝ","跑":"ㄆㄠˇ","棧":"ㄓㄢˋ",
+    "板":"ㄅㄢˇ","月":"ㄩㄝˋ","均":"ㄐㄩㄣ","賺":"ㄓㄨㄢˋ","峰":"ㄈㄥ",
+    "距":"ㄐㄩˋ","離":"ㄌㄧˊ","接":"ㄐㄧㄝ","台":"ㄊㄞˊ","號":"ㄏㄠˋ",
+    "朵":"ㄉㄨㄛˇ","組":"ㄗㄨˇ","錯":"ㄘㄨㄛˋ","賺":"ㄓㄨㄢˋ",
+    "際":"ㄐㄧˋ","國":"ㄍㄨㄛˊ","際":"ㄐㄧˋ","路":"ㄌㄨˋ",
+    "一":"ㄧ","共":"ㄍㄨㄥˋ","有":"ㄧㄡˇ","幾":"ㄐㄧˇ",
+    "比":"ㄅㄧˇ","多":"ㄉㄨㄛ","少":"ㄕㄠˇ","位":"ㄨㄟˋ",
+    "時":"ㄕˊ","間":"ㄐㄧㄢ","後":"ㄏㄡˋ","還":"ㄏㄞˊ",
+    "剩":"ㄕㄥˋ","共":"ㄍㄨㄥˋ","全":"ㄑㄩㄢˊ","部":"ㄅㄨˋ",
+    "收":"ㄕㄡ","入":"ㄖㄨˋ","計":"ㄐㄧˋ","算":"ㄙㄨㄢˋ",
+  };
+
+  const PHRASES = {
+    "排行":["ㄆㄞˊ","ㄏㄤˊ"],
+    "機長":["ㄐㄧ","ㄓㄤˇ"],
+    "空位":["ㄎㄨㄥˋ","ㄨㄟˋ"],
+    "重量":["ㄓㄨㄥˋ","ㄌㄧㄤˋ"],
+    "重的":["ㄓㄨㄥˋ","˙ㄉㄜ"],
+    "更多":["ㄍㄥˋ","ㄉㄨㄛ"],
+    "更遠":["ㄍㄥˋ","ㄩㄢˇ"],
+  };
+
+  const TONE = {"ˊ":1,"ˇ":1,"ˋ":1,"˙":1};
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g,c=>
+      ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  }
+  function isHan(ch) { const c=ch.codePointAt(0); return c>=0x4e00&&c<=0x9fff; }
+  function ruby(ch,zh) {
+    let base=zh,tone="",neutral=false;
+    if(zh[0]==="˙"){neutral=true;tone="˙";base=zh.slice(1);}
+    else{const l=zh[zh.length-1];if(TONE[l]){tone=l;base=zh.slice(0,-1);}}
+    const bs=`<span class="zy-b">${esc(base)}</span>`;
+    let cl;
+    if(neutral)cl=`<span class="zy-z zy-neu"><span class="zy-t">${esc(tone)}</span>${bs}</span>`;
+    else if(tone)cl=`<span class="zy-z">${bs}<span class="zy-t">${esc(tone)}</span></span>`;
+    else cl=`<span class="zy-z">${bs}</span>`;
+    return `<span class="zy"><span class="zy-c">${esc(ch)}</span>${cl}</span>`;
+  }
+  function annotate(str) {
+    let out="",i=0;
+    while(i<str.length){
+      // pass HTML tags through unchanged
+      if(str[i]==="<"){
+        const end=str.indexOf(">",i);
+        if(end!==-1){out+=str.slice(i,end+1);i=end+1;continue;}
+      }
+      let matched=false;
+      for(let len=4;len>=2;len--){
+        const sub=str.substr(i,len);
+        if(PHRASES[sub]){
+          for(let k=0;k<sub.length;k++)out+=ruby(sub[k],PHRASES[sub][k]);
+          i+=len;matched=true;break;
+        }
+      }
+      if(matched)continue;
+      const ch=str[i];
+      if(isHan(ch)&&CHARS[ch])out+=ruby(ch,CHARS[ch]);
+      else out+=esc(ch);
+      i++;
+    }
+    return out;
+  }
+  window.ZH={annotate,esc,CHARS,PHRASES};
+})();
+
+// ════════════════════════════════════════════════════
+// I18N
+// ════════════════════════════════════════════════════
+const I18N=(function(){
+  const S={
+    en:{
+      appTitle:"🌟 Math Adventure!",
+      subtitle:"Fun math puzzles for young explorers ✨",
+      namePH:"What's your name?",
+      chooseAdv:"🗺️ Choose your adventure:",
+      chooseDiff:"🎯 Choose difficulty:",
+      dEasy:"🌱 Easy",dMedium:"⭐ Medium",dHard:"🔥 Hard",
+      thAirline:"Airline",thCargo:"Cargo",thBus:"City Bus",
+      startBtn:"🚀 Start Adventure!",
+      lbLink:"🏆 View Leaderboard",
+      hintBtn:"💡 50/50 Hint",
+      ptsLabel:"pts",
+      ptsSuffix:"points earned!",
+      statCorrect:"Correct",statAcc:"Accuracy",statTime:"Avg Time",statStreak:"Best Streak",
+      playAgain:"🔄 Play Again",changeSet:"🏠 Change Settings",
+      lbTitle:"🏆 Leaderboard",
+      lbEmpty:"No scores yet — be the first! 🚀",
+      noName:"⚠️ Enter your name first!",
+      keepGoing:"Keep Going! →",understand:"I understand →",seeResults:"🏁 See Results!",
+      wrong:"Not quite…",timeout:"Time's Up!",
+    },
+    "zh-tw":{
+      appTitle:"🌟 數學大冒險！",
+      subtitle:"小探險家的有趣數學題 ✨",
+      namePH:"你的名字是？",
+      chooseAdv:"🗺️ 選一個冒險：",
+      chooseDiff:"🎯 選難度：",
+      dEasy:"🌱 簡單",dMedium:"⭐ 普通",dHard:"🔥 困難",
+      thAirline:"航空",thCargo:"貨運",thBus:"公車",
+      startBtn:"🚀 開始冒險！",
+      lbLink:"🏆 排行榜",
+      hintBtn:"💡 五五開提示",
+      ptsLabel:"分",
+      ptsSuffix:"分，很棒！",
+      statCorrect:"答對",statAcc:"正確率",statTime:"平均秒數",statStreak:"最長連勝",
+      playAgain:"🔄 再玩一次",changeSet:"🏠 更改設定",
+      lbTitle:"🏆 排行榜",
+      lbEmpty:"還沒有分數 — 成為第一名吧！🚀",
+      noName:"⚠️ 請先輸入名字！",
+      keepGoing:"繼續 →",understand:"我知道了 →",seeResults:"🏁 看結果！",
+      wrong:"再想想看…",timeout:"時間到了！",
+    },
+  };
+  const CHEERS={
+    en:["Great job! 🎉","Awesome! 🌟","Correct! 💪","Brilliant! 🧠","You got it! 🎯","Spot on! ✨"],
+    "zh-tw":["太棒了！🎉","好厲害！🌟","答對了！💪","超聰明！🧠","就是這樣！🎯","完全正確！✨"],
+  };
+  let _lang="en";
+  const _cbs=[];
+
+  function t(k){ return (S[_lang]&&S[_lang][k])||S.en[k]||k; }
+
+  function apply(){
+    document.documentElement.lang=_lang;
+    document.body.classList.toggle("zh",_lang==="zh-tw");
+    const zh=_lang==="zh-tw";
+    document.querySelectorAll("[data-i18n]").forEach(el=>{
+      const key=el.getAttribute("data-i18n");
+      const str=t(key);
+      if(zh&&window.ZH)el.innerHTML=ZH.annotate(str);
+      else el.textContent=str;
+    });
+    document.querySelectorAll(".lang-btn").forEach(b=>
+      b.classList.toggle("active",b.dataset.lang===_lang));
+    const inp=document.getElementById("name-input");
+    if(inp)inp.placeholder=t("namePH");
+    _cbs.forEach(fn=>fn(_lang));
+  }
+
+  return{
+    get lang(){return _lang;},
+    t,apply,
+    cheer(){const a=CHEERS[_lang]||CHEERS.en;return a[Math.floor(Math.random()*a.length)];},
+    setLang(l){if(!S[l])return;_lang=l;localStorage.setItem("ma_lang",l);apply();},
+    init(){
+      const sv=localStorage.getItem("ma_lang");
+      const br=(navigator.language||"en").toLowerCase();
+      _lang=sv||(br.startsWith("zh")?"zh-tw":"en");
+      apply();
+    },
+    onChange(fn){_cbs.push(fn);},
+  };
+})();
+
+// ════════════════════════════════════════════════════
+// SPEECH
+// ════════════════════════════════════════════════════
+function stripHtml(s){return s.replace(/<[^>]+>/g,"");}
+function pickVoice(lang){
+  const voices=window.speechSynthesis.getVoices();
+  if(!voices.length)return null;
+  const zh=lang==="zh-TW";
+  // preferred natural voices by priority
+  const prefs=zh
+    ?["Meijia","Tingting","zh-TW","zh_TW","Chinese (Traditional)"]
+    :["Samantha","Karen","Moira","Daniel","en-US","en_US","English"];
+  for(const p of prefs){
+    const v=voices.find(v=>v.name.includes(p)||v.lang===p);
+    if(v)return v;
+  }
+  // fallback: first voice matching the language prefix
+  return voices.find(v=>v.lang.startsWith(zh?"zh":"en"))||null;
+}
+function speak(text){
+  if(!window.speechSynthesis||!text.trim())return;
+  window.speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text);
+  const lang=I18N.lang==="zh-tw"?"zh-TW":"en-US";
+  u.lang=lang;
+  u.rate=0.9; u.pitch=1.0;
+  const v=pickVoice(lang);
+  if(v)u.voice=v;
+  const btn=document.getElementById("speak-btn");
+  if(btn)btn.classList.add("speaking");
+  u.onend=u.onerror=()=>btn&&btn.classList.remove("speaking");
+  window.speechSynthesis.speak(u);
+}
+function speakQ(){
+  const q=S.qs&&S.qs[S.qi];
+  if(!q)return;
+  const zh=I18N.lang==="zh-tw";
+  speak(stripHtml(zh?q.s_zh:q.s_en)+" "+(zh?q.q_zh:q.q_en));
+}
+
+// ════════════════════════════════════════════════════
+// CONFIG
+// ════════════════════════════════════════════════════
+const THEMES={
+  airline:{emoji:"✈️",vehicle:"✈️",bg:"linear-gradient(135deg,#e0f2fe,#bae6fd)"},
+  cargo:  {emoji:"🚛",vehicle:"🚛",bg:"linear-gradient(135deg,#fef9c3,#fde68a)"},
+  bus:    {emoji:"🚌",vehicle:"🚌",bg:"linear-gradient(135deg,#dcfce7,#86efac)"},
+};
+const DIFFS={easy:{secs:40},medium:{secs:30},hard:{secs:22}};
+const TOTAL=10;
+
+// ════════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════════
+let S={
+  name:"",theme:"airline",diff:"easy",
+  qs:[],qi:0,score:0,streak:0,best:0,
+  hints:2,correct:0,timeSum:0,
+  timer:null,t:0,answered:false,
+};
+
+// ════════════════════════════════════════════════════
+// UTILS
+// ════════════════════════════════════════════════════
+const r=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+function distractors(ans,n=3){
+  const s=new Set();
+  const pool=[-3,-2,-1,1,2,3,-5,5,-4,4,-10,10,-6,6,-8,8].sort(()=>Math.random()-.5);
+  for(const d of pool){if(s.size>=n)break;const v=ans+d;if(v>0&&v!==ans)s.add(v);}
+  while(s.size<n){const v=ans+r(1,15)*(Math.random()>.5?1:-1);if(v>0&&v!==ans)s.add(v);}
+  return[...s].slice(0,n);
+}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=r(0,i);[a[i],a[j]]=[a[j],a[i]];}return a;}
+function mstop(lo,hi,n){
+  let cur=r(lo,hi);const start=cur,stops=[];
+  for(let i=0;i<n;i++){
+    const off=r(1,Math.max(1,Math.min(cur-2,10)));
+    const on=r(1,12);cur=cur-off+on;stops.push({off,on});
+  }
+  return{start,stops,final:cur};
+}
+
+// ════════════════════════════════════════════════════
+// QUESTION BANKS  (each returns s_en/s_zh, q_en/q_zh, e_en/e_zh)
+// ════════════════════════════════════════════════════
+
+// ── AIRLINE ──
+const QA={
+  easy:[
+    ()=>{const a=r(2,10),b=r(1,8);return{v:`✈️ ${"👤".repeat(Math.min(a,7))}`,
+      s_en:`Captain Zara's plane has <b>${a}</b> passengers. <b>${b}</b> more board at the gate.`,
+      s_zh:`薩拉機長的飛機有 <b>${a}</b> 位乘客，又有 <b>${b}</b> 位在登機門上飛機。`,
+      q_en:`How many passengers are on the plane now?`,q_zh:`現在飛機上一共有幾位乘客？`,
+      a:a+b,e_en:`${a} + ${b} = ${a+b} passengers! 🎉`,e_zh:`${a} + ${b} = ${a+b} 位乘客！🎉`};},
+    ()=>{const tot=r(8,18),off=r(1,tot-2);return{v:`✈️ ${"👤".repeat(Math.min(tot,7))} 🏙️`,
+      s_en:`There are <b>${tot}</b> passengers on the plane. <b>${off}</b> get off at the airport.`,
+      s_zh:`飛機上有 <b>${tot}</b> 位乘客，到了機場有 <b>${off}</b> 位乘客下機。`,
+      q_en:`How many passengers are still flying?`,q_zh:`還有幾位乘客繼續飛行？`,
+      a:tot-off,e_en:`${tot} − ${off} = ${tot-off} passengers still on board!`,e_zh:`${tot} − ${off} = ${tot-off} 位乘客還在飛！`};},
+    ()=>{const b=r(1,3),p=r(2,6);return{v:`✈️ ${"🧳".repeat(Math.min(b*p,8))}`,
+      s_en:`Each passenger brings <b>${b}</b> bag${b>1?"s":""}. There are <b>${p}</b> passengers.`,
+      s_zh:`每位乘客帶 <b>${b}</b> 個行李。飛機上有 <b>${p}</b> 位乘客。`,
+      q_en:`How many bags in total?`,q_zh:`一共有幾個行李？`,
+      a:b*p,e_en:`${b} × ${p} = ${b*p} bags!`,e_zh:`${b} × ${p} = ${b*p} 個行李！`};},
+    ()=>{const c=r(3,9),ad=r(2,8);return{v:`✈️ 👶 🧑`,
+      s_en:`Flight A has <b>${c}</b> children and <b>${ad}</b> adults on board.`,
+      s_zh:`A 班機有 <b>${c}</b> 位小朋友和 <b>${ad}</b> 位大人。`,
+      q_en:`How many people are on the flight?`,q_zh:`這班飛機上一共有幾個人？`,
+      a:c+ad,e_en:`${c} + ${ad} = ${c+ad} people!`,e_zh:`${c} + ${ad} = ${c+ad} 個人！`};},
+    ()=>{const s=r(10,18),tk=r(3,s-2);return{v:`💺💺💺 ✈️`,
+      s_en:`The small plane has <b>${s}</b> seats. <b>${tk}</b> are occupied.`,
+      s_zh:`這架小飛機有 <b>${s}</b> 個座位，有 <b>${tk}</b> 個座位有人坐。`,
+      q_en:`How many seats are empty?`,q_zh:`還有幾個空座位？`,
+      a:s-tk,e_en:`${s} − ${tk} = ${s-tk} empty seats!`,e_zh:`${s} − ${tk} = ${s-tk} 個空座位！`};},
+  ],
+  medium:[
+    ()=>{const a=r(25,80),b=r(10,40);return{v:`✈️ 👨‍👩‍👧‍👦`,
+      s_en:`Captain Zara's plane has <b>${a}</b> passengers. At the layover <b>${b}</b> more board.`,
+      s_zh:`薩拉機長的飛機有 <b>${a}</b> 位乘客，中途又有 <b>${b}</b> 位上機。`,
+      q_en:`How many passengers total?`,q_zh:`一共有幾位乘客？`,
+      a:a+b,e_en:`${a} + ${b} = ${a+b}!`,e_zh:`${a} + ${b} = ${a+b}！`};},
+    ()=>{const tot=r(100,200),tk=r(50,tot-10);return{v:`✈️ 💺 × lots`,
+      s_en:`The jet has <b>${tot}</b> seats. <b>${tk}</b> are occupied.`,
+      s_zh:`這架客機有 <b>${tot}</b> 個座位，其中 <b>${tk}</b> 個有人坐。`,
+      q_en:`How many seats are empty?`,q_zh:`還有幾個空座位？`,
+      a:tot-tk,e_en:`${tot} − ${tk} = ${tot-tk}!`,e_zh:`${tot} − ${tk} = ${tot-tk}！`};},
+    ()=>{const rows=r(10,25),spr=r(3,6);return{v:`💺 × ${rows} rows`,
+      s_en:`The plane has <b>${rows}</b> rows. Each row has <b>${spr}</b> seats.`,
+      s_zh:`飛機有 <b>${rows}</b> 排座位，每排有 <b>${spr}</b> 個座位。`,
+      q_en:`How many seats total?`,q_zh:`飛機一共有幾個座位？`,
+      a:rows*spr,e_en:`${rows} × ${spr} = ${rows*spr}!`,e_zh:`${rows} × ${spr} = ${rows*spr}！`};},
+    ()=>{const px=r(5,20)*10,pax=r(5,15);return{v:`🎫 ✈️ 💰`,
+      s_en:`Each ticket costs <b>$${px}</b>. Captain Zara sold <b>${pax}</b> tickets.`,
+      s_zh:`每張機票 <b>${px}</b> 元，薩拉機長今天賣了 <b>${pax}</b> 張。`,
+      q_en:`How much did the airline collect?`,q_zh:`航空公司一共收了多少錢？`,
+      a:px*pax,e_en:`$${px} × ${pax} = $${px*pax}!`,e_zh:`${px} × ${pax} = ${px*pax} 元！`};},
+    ()=>{const div=r(5,12),quo=r(4,15),tot=div*quo;return{v:`✈️ ÷ sections`,
+      s_en:`The airline splits <b>${tot}</b> passengers equally across <b>${div}</b> cabin sections.`,
+      s_zh:`航空公司把 <b>${tot}</b> 位乘客平均分配到 <b>${div}</b> 個艙區。`,
+      q_en:`How many passengers per section?`,q_zh:`每個艙區有幾位乘客？`,
+      a:quo,e_en:`${tot} ÷ ${div} = ${quo}!`,e_zh:`${tot} ÷ ${div} = ${quo}！`};},
+  ],
+  hard:[
+    ()=>{const m=mstop(30,60,2);const[s1,s2]=m.stops;return{v:`🛫→🏙️A→🏙️B→🛬`,
+      s_en:`Plane starts with <b>${m.start}</b>. City A: <b>${s1.off}</b> off, <b>${s1.on}</b> on. City B: <b>${s2.off}</b> off, <b>${s2.on}</b> on.`,
+      s_zh:`飛機出發有 <b>${m.start}</b> 位乘客。城市A：下 <b>${s1.off}</b> 位，上 <b>${s1.on}</b> 位。城市B：下 <b>${s2.off}</b> 位，上 <b>${s2.on}</b> 位。`,
+      q_en:`How many passengers at the final destination?`,q_zh:`抵達終點時有幾位乘客？`,
+      a:m.final,e_en:`${m.start}−${s1.off}+${s1.on}−${s2.off}+${s2.on} = ${m.final}!`,
+      e_zh:`${m.start}−${s1.off}+${s1.on}−${s2.off}+${s2.on} = ${m.final}！`};},
+    ()=>{const spd=r(4,10)*50,hrs=r(2,8);return{v:`✈️💨 ⏱️`,
+      s_en:`Captain Zara's plane flies at <b>${spd} km/h</b> for <b>${hrs} hours</b>.`,
+      s_zh:`薩拉機長的飛機以時速 <b>${spd} 公里</b>飛行了 <b>${hrs} 小時</b>。`,
+      q_en:`How far does the plane travel?`,q_zh:`飛機一共飛了幾公里？`,
+      a:spd*hrs,e_en:`${spd} × ${hrs} = ${spd*hrs} km!`,e_zh:`${spd} × ${hrs} = ${spd*hrs} 公里！`};},
+    ()=>{const lug=r(2,5),px=r(15,50),pax=r(8,20);return{v:`🧳💰 ✈️`,
+      s_en:`<b>${pax}</b> passengers each check <b>${lug}</b> bags at <b>$${px}</b> each.`,
+      s_zh:`<b>${pax}</b> 位乘客各自托運了 <b>${lug}</b> 個行李，每個 <b>${px}</b> 元。`,
+      q_en:`What is the total luggage fee?`,q_zh:`一共收了多少托運費？`,
+      a:pax*lug*px,e_en:`${pax}×${lug}×$${px} = $${pax*lug*px}!`,e_zh:`${pax}×${lug}×${px} = ${pax*lug*px} 元！`};},
+    ()=>{const fc=r(20,40),eco=r(80,160),lay=r(10,Math.min(eco-5,40));return{v:`🥂+🪑 ✈️`,
+      s_en:`The plane has <b>${fc}</b> first-class and <b>${eco}</b> economy passengers. At the layover <b>${lay}</b> economy passengers get off.`,
+      s_zh:`飛機有 <b>${fc}</b> 位頭等艙乘客和 <b>${eco}</b> 位經濟艙乘客，中途 <b>${lay}</b> 位經濟艙乘客下機。`,
+      q_en:`How many economy passengers continue?`,q_zh:`繼續飛行的經濟艙乘客有幾位？`,
+      a:eco-lay,e_en:`${eco} − ${lay} = ${eco-lay}!`,e_zh:`${eco} − ${lay} = ${eco-lay} 位！`};},
+    ()=>{const fc=r(5,20),fp=r(100,300),bc=r(5,20),bp=r(50,150);return{v:`💸 ✈️ 💸`,
+      s_en:`First-class: <b>${fc}</b> seats at <b>$${fp}</b> each. Business: <b>${bc}</b> seats at <b>$${bp}</b> each.`,
+      s_zh:`頭等艙：<b>${fc}</b> 個座位，每個 <b>${fp}</b> 元。商務艙：<b>${bc}</b> 個座位，每個 <b>${bp}</b> 元。`,
+      q_en:`What is the total ticket revenue?`,q_zh:`這些票的總收入是多少元？`,
+      a:fc*fp+bc*bp,e_en:`(${fc}×$${fp})+(${bc}×$${bp}) = $${fc*fp+bc*bp}!`,e_zh:`(${fc}×${fp})+(${bc}×${bp}) = ${fc*fp+bc*bp} 元！`};},
+  ],
+};
+
+// ── CARGO ──
+const QC={
+  easy:[
+    ()=>{const a=r(3,10),b=r(2,8);return{v:`🚛 ${"📦".repeat(Math.min(a,7))}`,
+      s_en:`Worker Max loads <b>${a}</b> boxes into the truck and adds <b>${b}</b> more.`,
+      s_zh:`麥克工人把 <b>${a}</b> 個箱子裝進卡車，又再放入 <b>${b}</b> 個。`,
+      q_en:`How many boxes are in the truck?`,q_zh:`卡車裡現在有幾個箱子？`,
+      a:a+b,e_en:`${a} + ${b} = ${a+b} boxes!`,e_zh:`${a} + ${b} = ${a+b} 個箱子！`};},
+    ()=>{const tot=r(8,16),del=r(2,tot-2);return{v:`🚛 📦 🏭`,
+      s_en:`The truck has <b>${tot}</b> boxes. Workers unload <b>${del}</b> at the warehouse.`,
+      s_zh:`卡車上有 <b>${tot}</b> 個箱子，工人在倉庫卸下了 <b>${del}</b> 個。`,
+      q_en:`How many boxes remain in the truck?`,q_zh:`卡車上還剩幾個箱子？`,
+      a:tot-del,e_en:`${tot} − ${del} = ${tot-del} boxes!`,e_zh:`${tot} − ${del} = ${tot-del} 個！`};},
+    ()=>{const wt=r(2,5),bx=r(2,5);return{v:`⚖️ ${"📦".repeat(bx)}`,
+      s_en:`Each box weighs <b>${wt} kg</b>. Worker Max has <b>${bx}</b> boxes.`,
+      s_zh:`每個箱子重 <b>${wt} 公斤</b>，麥克工人有 <b>${bx}</b> 個箱子。`,
+      q_en:`What is the total weight?`,q_zh:`總重量是多少公斤？`,
+      a:wt*bx,e_en:`${wt} × ${bx} = ${wt*bx} kg!`,e_zh:`${wt} × ${bx} = ${wt*bx} 公斤！`};},
+    ()=>{const a=r(3,8),b=r(2,7);return{v:`🚛🔴 + 🚛🔵`,
+      s_en:`The red truck carries <b>${a}</b> crates. The blue truck carries <b>${b}</b> crates.`,
+      s_zh:`紅色卡車載了 <b>${a}</b> 個板條箱，藍色卡車載了 <b>${b}</b> 個。`,
+      q_en:`How many crates in total?`,q_zh:`兩台卡車共有幾個板條箱？`,
+      a:a+b,e_en:`${a} + ${b} = ${a+b} crates!`,e_zh:`${a} + ${b} = ${a+b} 個！`};},
+    ()=>{const tot=r(10,18),bad=r(1,4);return{v:`📦📦 ❌`,
+      s_en:`A delivery has <b>${tot}</b> packages. <b>${bad}</b> are damaged and returned.`,
+      s_zh:`這批貨物有 <b>${tot}</b> 個包裹，其中 <b>${bad}</b> 個損壞退回。`,
+      q_en:`How many packages are delivered successfully?`,q_zh:`成功送達的包裹有幾個？`,
+      a:tot-bad,e_en:`${tot} − ${bad} = ${tot-bad} packages!`,e_zh:`${tot} − ${bad} = ${tot-bad} 個！`};},
+  ],
+  medium:[
+    ()=>{const a=r(30,90),b=r(10,50);return{v:`🏭 📦 × many`,
+      s_en:`The warehouse has <b>${a}</b> boxes. A new shipment brings <b>${b}</b> more.`,
+      s_zh:`倉庫裡有 <b>${a}</b> 個箱子，新到的貨帶來了 <b>${b}</b> 個。`,
+      q_en:`How many boxes total?`,q_zh:`倉庫裡現在共有幾個箱子？`,
+      a:a+b,e_en:`${a} + ${b} = ${a+b}!`,e_zh:`${a} + ${b} = ${a+b}！`};},
+    ()=>{const pt=r(15,30),tr=r(3,8);return{v:`${"🚛".repeat(Math.min(tr,5))} 📦`,
+      s_en:`Each truck carries <b>${pt}</b> crates. There are <b>${tr}</b> trucks.`,
+      s_zh:`每台卡車載 <b>${pt}</b> 個板條箱，車隊共有 <b>${tr}</b> 台卡車。`,
+      q_en:`How many crates total?`,q_zh:`車隊共載了幾個板條箱？`,
+      a:pt*tr,e_en:`${pt} × ${tr} = ${pt*tr}!`,e_zh:`${pt} × ${tr} = ${pt*tr}！`};},
+    ()=>{const cap=r(5,15)*10,wt=r(5,15),bx=Math.floor(cap/wt);return{v:`🚛 ⚖️ 📦`,
+      s_en:`A truck can carry <b>${cap} kg</b>. Each box weighs <b>${wt} kg</b>.`,
+      s_zh:`一台卡車可以載 <b>${cap} 公斤</b>的貨，每個箱子重 <b>${wt} 公斤</b>。`,
+      q_en:`How many boxes can it carry?`,q_zh:`這台卡車最多能裝幾個箱子？`,
+      a:bx,e_en:`${cap} ÷ ${wt} = ${bx} boxes!`,e_zh:`${cap} ÷ ${wt} = ${bx} 個！`};},
+    ()=>{const pr=r(5,25),bx=r(10,40);return{v:`💰 📦 🏷️`,
+      s_en:`Shipping each box costs <b>$${pr}</b>. A customer ships <b>${bx}</b> boxes.`,
+      s_zh:`每個箱子的運費是 <b>${pr}</b> 元，一位客戶要寄 <b>${bx}</b> 個箱子。`,
+      q_en:`What is the total shipping cost?`,q_zh:`總運費是多少元？`,
+      a:pr*bx,e_en:`$${pr} × ${bx} = $${pr*bx}!`,e_zh:`${pr} × ${bx} = ${pr*bx} 元！`};},
+    ()=>{const div=r(4,10),quo=r(5,15),tot=div*quo;return{v:`📦 ÷ 🚛`,
+      s_en:`Worker Max loads <b>${tot}</b> boxes equally into <b>${div}</b> trucks.`,
+      s_zh:`麥克工人把 <b>${tot}</b> 個箱子平均裝進 <b>${div}</b> 台卡車。`,
+      q_en:`How many boxes per truck?`,q_zh:`每台卡車裝幾個箱子？`,
+      a:quo,e_en:`${tot} ÷ ${div} = ${quo}!`,e_zh:`${tot} ÷ ${div} = ${quo}！`};},
+  ],
+  hard:[
+    ()=>{const con=r(5,12),bpc=r(8,20),ipb=r(5,15);return{v:`🚢 📦 × × ×`,
+      s_en:`A cargo ship has <b>${con}</b> containers. Each holds <b>${bpc}</b> boxes. Each box holds <b>${ipb}</b> items.`,
+      s_zh:`一艘貨船有 <b>${con}</b> 個貨櫃，每個貨櫃有 <b>${bpc}</b> 個箱子，每個箱子有 <b>${ipb}</b> 件物品。`,
+      q_en:`How many items on the ship?`,q_zh:`船上共有幾件物品？`,
+      a:con*bpc*ipb,e_en:`${con}×${bpc}×${ipb} = ${con*bpc*ipb}!`,e_zh:`${con}×${bpc}×${ipb} = ${con*bpc*ipb}！`};},
+    ()=>{const m=mstop(40,80,2);const[s1,s2]=m.stops;return{v:`🚛→📍1→📍2→🏠`,
+      s_en:`Truck starts with <b>${m.start}</b> boxes. Stop 1: delivers <b>${s1.off}</b>, picks up <b>${s1.on}</b>. Stop 2: delivers <b>${s2.off}</b>, picks up <b>${s2.on}</b>.`,
+      s_zh:`卡車出發有 <b>${m.start}</b> 個箱子。第一站：送出 <b>${s1.off}</b> 個，取回 <b>${s1.on}</b> 個。第二站：送出 <b>${s2.off}</b> 個，取回 <b>${s2.on}</b> 個。`,
+      q_en:`How many boxes after Stop 2?`,q_zh:`第二站後卡車上有幾個箱子？`,
+      a:m.final,e_en:`${m.start}−${s1.off}+${s1.on}−${s2.off}+${s2.on} = ${m.final}!`,
+      e_zh:`${m.start}−${s1.off}+${s1.on}−${s2.off}+${s2.on} = ${m.final}！`};},
+    ()=>{const kmL=r(5,12),lit=r(30,80);return{v:`⛽ 🚛 💨`,
+      s_en:`Max's truck travels <b>${kmL} km</b> per litre. The tank holds <b>${lit} litres</b>.`,
+      s_zh:`麥克的卡車每公升可以跑 <b>${kmL} 公里</b>，油箱有 <b>${lit} 公升</b>。`,
+      q_en:`How far on a full tank?`,q_zh:`加滿油可以跑幾公里？`,
+      a:kmL*lit,e_en:`${kmL} × ${lit} = ${kmL*lit} km!`,e_zh:`${kmL} × ${lit} = ${kmL*lit} 公里！`};},
+    ()=>{const rp=r(5,15),xp=rp+r(5,20),rc=r(40,100),xc=r(10,40);return{v:`📦🏷️ vs 📦🚀`,
+      s_en:`Regular: <b>${rc}</b> packages at <b>$${rp}</b> each. Express: <b>${xc}</b> at <b>$${xp}</b> each.`,
+      s_zh:`一般包裹：<b>${rc}</b> 個，每個 <b>${rp}</b> 元。快遞包裹：<b>${xc}</b> 個，每個 <b>${xp}</b> 元。`,
+      q_en:`What is the total revenue?`,q_zh:`總收入是多少元？`,
+      a:rc*rp+xc*xp,e_en:`(${rc}×$${rp})+(${xc}×$${xp}) = $${rc*rp+xc*xp}!`,e_zh:`(${rc}×${rp})+(${xc}×${xp}) = ${rc*rp+xc*xp} 元！`};},
+    ()=>{const layers=r(3,5),bpl=r(4,8),ipb=r(3,6),pal=r(2,4);return{v:`🏗️ 📦 × layers`,
+      s_en:`A pallet has <b>${layers}</b> layers, each with <b>${bpl}</b> boxes of <b>${ipb}</b> items. There are <b>${pal}</b> pallets.`,
+      s_zh:`一個棧板有 <b>${layers}</b> 層，每層 <b>${bpl}</b> 個箱子，每個箱子 <b>${ipb}</b> 件物品，共有 <b>${pal}</b> 個棧板。`,
+      q_en:`How many items in total?`,q_zh:`一共有幾件物品？`,
+      a:layers*bpl*ipb*pal,e_en:`${layers}×${bpl}×${ipb}×${pal} = ${layers*bpl*ipb*pal}!`,e_zh:`${layers}×${bpl}×${ipb}×${pal} = ${layers*bpl*ipb*pal}！`};},
+  ],
+};
+
+// ── BUS ──
+const QB={
+  easy:[
+    ()=>{const a=r(3,10),b=r(1,8);return{v:`🚌 ${"👤".repeat(Math.min(a,7))} 🚏`,
+      s_en:`Driver Rosa's bus has <b>${a}</b> passengers. At the stop <b>${b}</b> more get on.`,
+      s_zh:`蘿莎司機的公車有 <b>${a}</b> 位乘客，到站後又有 <b>${b}</b> 位上車。`,
+      q_en:`How many passengers now?`,q_zh:`現在公車上有幾位乘客？`,
+      a:a+b,e_en:`${a} + ${b} = ${a+b}!`,e_zh:`${a} + ${b} = ${a+b} 位！`};},
+    ()=>{const a=r(8,18),b=r(1,7);return{v:`🚌 🚏 👋`,
+      s_en:`The bus has <b>${a}</b> passengers. At the school stop <b>${b}</b> students get off.`,
+      s_zh:`公車上有 <b>${a}</b> 位乘客，到了學校站有 <b>${b}</b> 位同學下車。`,
+      q_en:`How many passengers are left?`,q_zh:`公車上還剩幾位乘客？`,
+      a:a-b,e_en:`${a} − ${b} = ${a-b}!`,e_zh:`${a} − ${b} = ${a-b} 位！`};},
+    ()=>{const buses=r(2,5),pp=r(3,8);return{v:`${"🚌".repeat(Math.min(buses,5))} 🏫`,
+      s_en:`There are <b>${buses}</b> school buses. Each carries <b>${pp}</b> students.`,
+      s_zh:`有 <b>${buses}</b> 台校車，每台載了 <b>${pp}</b> 位同學。`,
+      q_en:`How many students in total?`,q_zh:`一共有幾位同學？`,
+      a:buses*pp,e_en:`${buses} × ${pp} = ${buses*pp}!`,e_zh:`${buses} × ${pp} = ${buses*pp} 位！`};},
+    ()=>{const a=r(4,10),b=r(3,9);return{v:`🚌🔴 + 🚌🔵 🏫`,
+      s_en:`Bus A brings <b>${a}</b> children to school. Bus B brings <b>${b}</b>.`,
+      s_zh:`A 號公車送了 <b>${a}</b> 位小朋友上學，B 號送了 <b>${b}</b> 位。`,
+      q_en:`How many children arrive in total?`,q_zh:`一共有幾位小朋友到學校？`,
+      a:a+b,e_en:`${a} + ${b} = ${a+b}!`,e_zh:`${a} + ${b} = ${a+b} 位！`};},
+    ()=>{const seats=r(12,20),pax=r(5,seats-2);return{v:`🚌 💺 💺`,
+      s_en:`Driver Rosa's bus has <b>${seats}</b> seats. <b>${pax}</b> passengers are seated.`,
+      s_zh:`蘿莎司機的公車有 <b>${seats}</b> 個座位，目前有 <b>${pax}</b> 位乘客坐著。`,
+      q_en:`How many empty seats?`,q_zh:`還有幾個空座位？`,
+      a:seats-pax,e_en:`${seats} − ${pax} = ${seats-pax}!`,e_zh:`${seats} − ${pax} = ${seats-pax} 個！`};},
+  ],
+  medium:[
+    ()=>{const m=mstop(20,35,2);const[s1,s2]=m.stops;return{v:`🚌→🚏1→🚏2`,
+      s_en:`Bus starts with <b>${m.start}</b>. Stop 1: <b>${s1.off}</b> off, <b>${s1.on}</b> on. Stop 2: <b>${s2.off}</b> off, <b>${s2.on}</b> on.`,
+      s_zh:`公車出發有 <b>${m.start}</b> 位乘客。第一站：下 <b>${s1.off}</b> 位，上 <b>${s1.on}</b> 位。第二站：下 <b>${s2.off}</b> 位，上 <b>${s2.on}</b> 位。`,
+      q_en:`How many passengers on the bus now?`,q_zh:`現在公車上有幾位乘客？`,
+      a:m.final,e_en:`${m.start}−${s1.off}+${s1.on}−${s2.off}+${s2.on} = ${m.final}!`,
+      e_zh:`${m.start}−${s1.off}+${s1.on}−${s2.off}+${s2.on} = ${m.final}！`};},
+    ()=>{const fare=r(2,8),pax=r(15,40);return{v:`🎫 🚌 💰`,
+      s_en:`Bus tickets cost <b>$${fare}</b> each. <b>${pax}</b> passengers buy tickets today.`,
+      s_zh:`公車票每張 <b>${fare}</b> 元，今天有 <b>${pax}</b> 位乘客買票。`,
+      q_en:`How much fare does Driver Rosa collect?`,q_zh:`蘿莎司機一共收了多少票錢？`,
+      a:fare*pax,e_en:`$${fare} × ${pax} = $${fare*pax}!`,e_zh:`${fare} × ${pax} = ${fare*pax} 元！`};},
+    ()=>{const trips=r(4,8),ppt=r(20,45);return{v:`🚌 🔄 🔄`,
+      s_en:`Bus 12 makes <b>${trips}</b> trips per day. Each carries <b>${ppt}</b> passengers.`,
+      s_zh:`12 號公車每天跑 <b>${trips}</b> 趟，每趟約 <b>${ppt}</b> 位乘客。`,
+      q_en:`How many passengers per day?`,q_zh:`一天共有幾位乘客？`,
+      a:trips*ppt,e_en:`${trips} × ${ppt} = ${trips*ppt}!`,e_zh:`${trips} × ${ppt} = ${trips*ppt}！`};},
+    ()=>{const div=r(3,8),quo=r(5,12),tot=div*quo;return{v:`🚌 ÷ 🚏 stops`,
+      s_en:`The school bus picks up <b>${tot}</b> students equally from <b>${div}</b> stops.`,
+      s_zh:`校車在 <b>${div}</b> 個站平均接了共 <b>${tot}</b> 位同學。`,
+      q_en:`How many students at each stop?`,q_zh:`每站有幾位同學上車？`,
+      a:quo,e_en:`${tot} ÷ ${div} = ${quo}!`,e_zh:`${tot} ÷ ${div} = ${quo}！`};},
+    ()=>{const af=r(3,8),cf=r(1,af-1),ac=r(20,50),cc=r(15,35);return{v:`👨🎫 + 👧🎫`,
+      s_en:`Adults: <b>${ac}</b> at <b>$${af}</b> fare. Children: <b>${cc}</b> at <b>$${cf}</b> fare.`,
+      s_zh:`大人：<b>${ac}</b> 位，票價 <b>${af}</b> 元。小孩：<b>${cc}</b> 位，票價 <b>${cf}</b> 元。`,
+      q_en:`How much total fare?`,q_zh:`一共收了多少票錢？`,
+      a:ac*af+cc*cf,e_en:`(${ac}×$${af})+(${cc}×$${cf}) = $${ac*af+cc*cf}!`,e_zh:`(${ac}×${af})+(${cc}×${cf}) = ${ac*af+cc*cf} 元！`};},
+  ],
+  hard:[
+    ()=>{const m=mstop(40,60,4);const ss=m.stops;return{v:`🚌→🚏1→🚏2→🚏3→🚏4`,
+      s_en:`Bus starts with <b>${m.start}</b>. Stop 1: ${ss[0].off}↓${ss[0].on}↑. Stop 2: ${ss[1].off}↓${ss[1].on}↑. Stop 3: ${ss[2].off}↓${ss[2].on}↑. Stop 4: ${ss[3].off}↓${ss[3].on}↑.`,
+      s_zh:`公車出發有 <b>${m.start}</b> 位。站1：下${ss[0].off}上${ss[0].on}。站2：下${ss[1].off}上${ss[1].on}。站3：下${ss[2].off}上${ss[2].on}。站4：下${ss[3].off}上${ss[3].on}。`,
+      q_en:`How many passengers at the end?`,q_zh:`最後公車上有幾位乘客？`,
+      a:m.final,e_en:`Track all 4 stops → ${m.final} passengers!`,e_zh:`追蹤四站後 → ${m.final} 位乘客！`};},
+    ()=>{const wd=r(20,22),wdp=r(200,400),we=8,wep=r(100,250);return{v:`📅 🚌 × 30`,
+      s_en:`This month: <b>${wd}</b> weekdays (avg <b>${wdp}</b>/day) and <b>${we}</b> weekend days (avg <b>${wep}</b>/day).`,
+      s_zh:`這個月：<b>${wd}</b> 個工作天（平均每天 <b>${wdp}</b> 位），<b>${we}</b> 個假日（平均每天 <b>${wep}</b> 位）。`,
+      q_en:`How many total passengers this month?`,q_zh:`這個月共有幾位乘客？`,
+      a:wd*wdp+we*wep,e_en:`(${wd}×${wdp})+(${we}×${wep}) = ${wd*wdp+we*wep}!`,e_zh:`(${wd}×${wdp})+(${we}×${wep}) = ${wd*wdp+we*wep}！`};},
+    ()=>{const bnum=r(3,6),wait=r(3,5)*bnum;return{v:`${"🚌".repeat(Math.min(bnum,5))} 👥`,
+      s_en:`<b>${bnum}</b> buses are waiting. <b>${wait}</b> people split evenly across the buses.`,
+      s_zh:`有 <b>${bnum}</b> 台公車，<b>${wait}</b> 位乘客平均分乘這些公車。`,
+      q_en:`How many people per bus?`,q_zh:`每台公車有幾位乘客？`,
+      a:wait/bnum,e_en:`${wait} ÷ ${bnum} = ${wait/bnum}!`,e_zh:`${wait} ÷ ${bnum} = ${wait/bnum}！`};},
+    ()=>{const ph=r(3,5),pp=r(80,140),pf=r(3,6),oh=r(2,4),op=r(30,70),of_=r(1,3);return{v:`🌅 Rush + 🌆 Off-peak`,
+      s_en:`Rush: <b>${ph} hrs</b>, <b>${pp} pax/hr</b>, $${pf}/person. Off-peak: <b>${oh} hrs</b>, <b>${op} pax/hr</b>, $${of_}/person.`,
+      s_zh:`尖峰：<b>${ph} 小時</b>，每小時 <b>${pp}</b> 人，票價 <b>${pf}</b> 元。離峰：<b>${oh} 小時</b>，每小時 <b>${op}</b> 人，票價 <b>${of_}</b> 元。`,
+      q_en:`What is the total daily revenue?`,q_zh:`今天的總收入是多少元？`,
+      a:ph*pp*pf+oh*op*of_,e_en:`(${ph}×${pp}×$${pf})+(${oh}×${op}×$${of_}) = $${ph*pp*pf+oh*op*of_}!`,
+      e_zh:`(${ph}×${pp}×${pf})+(${oh}×${op}×${of_}) = ${ph*pp*pf+oh*op*of_} 元！`};},
+    ()=>{const L1=r(15,30),L2=r(10,25),t12=r(3,8),t23=r(2,6);return{v:`🚌1↔🚌2↔🚌3`,
+      s_en:`Line 1: <b>${L1}</b> pax. Line 2: <b>${L2}</b> pax. <b>${t12}</b> transfer L1→L2. Then <b>${t23}</b> transfer L2→L3.`,
+      s_zh:`1號線：<b>${L1}</b> 位。2號線：<b>${L2}</b> 位。有 <b>${t12}</b> 位從1號線換到2號線，再有 <b>${t23}</b> 位從2號線換到3號線。`,
+      q_en:`How many passengers are now on Line 2?`,q_zh:`現在2號線上有幾位乘客？`,
+      a:L2+t12-t23,e_en:`${L2}+${t12}−${t23} = ${L2+t12-t23}!`,e_zh:`${L2}+${t12}−${t23} = ${L2+t12-t23}！`};},
+  ],
+};
+
+const BANKS={airline:QA,cargo:QC,bus:QB};
+
+// ════════════════════════════════════════════════════
+// BUILD QUESTIONS
+// ════════════════════════════════════════════════════
+function buildQuestions(theme,diff){
+  const bank=BANKS[theme][diff];
+  const qs=[];const used=new Set();
+  for(let i=0;i<TOTAL;i++){
+    let idx,tries=0;
+    do{idx=r(0,bank.length-1);tries++;}while(used.has(idx)&&tries<30);
+    if(used.size<bank.length)used.add(idx);else used.clear();
+    let q;
+    try{q=bank[idx]();}catch(e){i--;continue;}
+    if(!q||q.a<=0||!Number.isFinite(q.a)){i--;continue;}
+    q.opts=shuffle([q.a,...distractors(q.a)]);
+    qs.push(q);
+  }
+  return qs;
+}
+
+// ════════════════════════════════════════════════════
+// GAME
+// ════════════════════════════════════════════════════
+function startGame(){
+  const nm=document.getElementById("name-input").value.trim();
+  if(!nm){
+    const inp=document.getElementById("name-input");
+    inp.style.borderColor="#ef4444";
+    inp.placeholder=I18N.t("noName");
+    setTimeout(()=>{inp.style.borderColor="";inp.placeholder=I18N.t("namePH");},2000);
+    return;
+  }
+  Object.assign(S,{name:nm,qs:buildQuestions(S.theme,S.diff),qi:0,score:0,streak:0,best:0,hints:2,correct:0,timeSum:0,answered:false});
+  show("game");
+  loadQ();
+}
+
+function loadQ(){
+  if(S.qi>=TOTAL){endGame();return;}
+  const q=S.qs[S.qi];
+  const th=THEMES[S.theme];
+  S.answered=false;
+  S._qStart=Date.now();
+
+  // header
+  document.getElementById("g-score").textContent=`⭐ ${S.score} ${I18N.t("ptsLabel")}`;
+  document.getElementById("g-qnum").textContent=`Q ${S.qi+1} / ${TOTAL}`;
+  document.getElementById("g-prog").style.width=`${((S.qi+1)/TOTAL)*100}%`;
+  updStreak();
+
+  // scene
+  document.getElementById("g-scene").style.background=th.bg;
+  document.getElementById("g-visuals").textContent=q.v;
+  const zh=I18N.lang==="zh-tw";
+  document.getElementById("g-story").innerHTML=zh?ZH.annotate(q.s_zh):q.s_en;
+  document.getElementById("g-question").innerHTML="❓ "+(zh?ZH.annotate(q.q_zh):ZH.esc(q.q_en));
+
+  // answers
+  for(let i=0;i<4;i++){
+    const b=document.getElementById("a"+i);
+    b.textContent=q.opts[i];b.className="ans-btn";b.disabled=false;b.style.opacity="";
+  }
+
+  // hints
+  updHint();
+
+  // timer + auto-speak
+  tickStart(DIFFS[S.diff].secs);
+  setTimeout(speakQ,350);
+}
+
+function pick(i){
+  if(S.answered)return;
+  S.answered=true;
+  window.speechSynthesis&&window.speechSynthesis.cancel();
+  clearInterval(S.timer);
+
+  const q=S.qs[S.qi];
+  const ok=q.opts[i]===q.a;
+  const secs=Math.round((Date.now()-S._qStart)/1000);
+  const max=DIFFS[S.diff].secs;
+  S.timeSum+=Math.min(secs,max);
+
+  for(let k=0;k<4;k++){
+    const b=document.getElementById("a"+k);
+    b.disabled=true;
+    if(q.opts[k]===q.a)b.classList.add("correct");
+  }
+  if(!ok)document.getElementById("a"+i).classList.add("wrong");
+
+  let pts=0;
+  if(ok){
+    pts=10;if(secs<=max/2)pts+=3;
+    S.streak++;if(S.streak>S.best)S.best=S.streak;if(S.streak>=3)pts+=2;
+    S.score+=pts;S.correct++;
+    popScore(`+${pts}`);
+  }else{S.streak=0;}
+  S.answers=(S.answers||[]).concat({ok,secs});
+  setTimeout(()=>showFB(ok,q,pts),550);
+}
+
+function timeUp(){
+  if(S.answered)return;
+  S.answered=true;
+  window.speechSynthesis&&window.speechSynthesis.cancel();
+  const q=S.qs[S.qi];S.streak=0;
+  for(let k=0;k<4;k++){
+    const b=document.getElementById("a"+k);b.disabled=true;
+    if(q.opts[k]===q.a)b.classList.add("correct");
+  }
+  S.timeSum+=DIFFS[S.diff].secs;
+  showFB(false,q,0,true);
+}
+
+function useHint(){
+  if(S.hints<=0||S.answered)return;
+  S.hints--;updHint();
+  const q=S.qs[S.qi];
+  const wrongs=[];
+  for(let i=0;i<4;i++)if(q.opts[i]!==q.a&&!document.getElementById("a"+i).disabled)wrongs.push(i);
+  shuffle(wrongs).slice(0,2).forEach(i=>{
+    const b=document.getElementById("a"+i);b.disabled=true;b.classList.add("faded");
+  });
+}
+
+const CHEERS_EN=["Great job! 🎉","Awesome! 🌟","Correct! 💪","Brilliant! 🧠","You got it! 🎯","Spot on! ✨"];
+const CHEERS_ZH=["太棒了！🎉","好厲害！🌟","答對了！💪","超聰明！🧠","就是這樣！🎯","完全正確！✨"];
+
+function showFB(ok,q,pts,timeout=false){
+  const zh=I18N.lang==="zh-tw";
+  const cheers=zh?CHEERS_ZH:CHEERS_EN;
+  document.getElementById("fb-icon").textContent=ok?"✅":(timeout?"⏰":"❌");
+  const ttl=ok?cheers[r(0,cheers.length-1)]:(timeout?I18N.t("timeout"):I18N.t("wrong"));
+  document.getElementById("fb-title").textContent=ttl;
+  document.getElementById("fb-title").style.color=ok?"#15803d":(timeout?"#c2410c":"#b91c1c");
+  const expl=zh?q.e_zh:q.e_en;
+  document.getElementById("fb-expl").innerHTML=zh?ZH.annotate(expl):expl;
+  const more=S.qi+1<TOTAL;
+  const btn=document.getElementById("fb-btn");
+  btn.textContent=!more?I18N.t("seeResults"):(ok?I18N.t("keepGoing"):I18N.t("understand"));
+  btn.className=`next-btn ${ok?"ok":"oh"}`;
+  document.getElementById("overlay").classList.add("active");
+  // speak explanation
+  setTimeout(()=>speak(stripHtml(expl)),400);
+}
+
+function nextQ(){
+  document.getElementById("overlay").classList.remove("active");
+  S.qi++;loadQ();
+}
+
+function updStreak(){
+  const zh=I18N.lang==="zh-tw";
+  document.getElementById("g-streak").textContent=S.streak>=3
+    ?(zh?`🔥 連勝 ${S.streak} 次！`:`🔥 ${S.streak} Streak!`):"";
+}
+function updHint(){
+  const n=S.hints,zh=I18N.lang==="zh-tw";
+  document.getElementById("g-hint-info").textContent=zh?`💡 剩 ${n} 個提示`:`💡 ${n} hint${n!==1?"s":""} left`;
+  document.getElementById("g-hint-btn").disabled=n===0;
+}
+
+function popScore(txt){
+  const el=document.createElement("div");el.className="score-pop";el.textContent=txt;
+  el.style.left=r(20,70)+"%";el.style.top=r(30,50)+"%";
+  document.getElementById("card").appendChild(el);setTimeout(()=>el.remove(),1000);
+}
+
+// ════════════════════════════════════════════════════
+// END GAME
+// ════════════════════════════════════════════════════
+function endGame(){
+  clearInterval(S.timer);saveScore();
+  const acc=Math.round((S.correct/TOTAL)*100);
+  const avg=S.timeSum>0?Math.round(S.timeSum/TOTAL):0;
+  const stars=acc>=90?"⭐⭐⭐":acc>=70?"⭐⭐":"⭐";
+  const zh=I18N.lang==="zh-tw";
+  document.getElementById("r-stars").textContent=stars;
+  document.getElementById("r-pts").textContent=S.score;
+  document.getElementById("r-correct").textContent=`${S.correct}/${TOTAL}`;
+  document.getElementById("r-acc").textContent=`${acc}%`;
+  document.getElementById("r-avg").textContent=`${avg}s`;
+  document.getElementById("r-streak").textContent=S.best;
+  show("results");
+  if(acc>=90)setTimeout(confetti,350);
+  const msg=acc>=90?(zh?"你太厲害了！滿分！":"Perfect score! Amazing!")
+    :acc>=70?(zh?"做得很好！":"Well done!")
+    :(zh?"繼續加油！":"Keep practicing!");
+  setTimeout(()=>speak(msg),400);
+}
+
+// ════════════════════════════════════════════════════
+// LEADERBOARD
+// ════════════════════════════════════════════════════
+function saveScore(){
+  const key=`ma_lb_${S.diff}`;
+  const entry={name:S.name,score:S.score,theme:S.theme,acc:Math.round((S.correct/TOTAL)*100)};
+  let board=JSON.parse(localStorage.getItem(key)||"[]");
+  board.push(entry);board.sort((a,b)=>b.score-a.score);board=board.slice(0,10);
+  localStorage.setItem(key,JSON.stringify(board));
+}
+
+function openLB(){show("lb");lbTab(document.querySelector(".lb-tab"),"easy");}
+
+function lbTab(el,diff){
+  document.querySelectorAll(".lb-tab").forEach(t=>t.classList.remove("active"));
+  el.classList.add("active");
+  const board=JSON.parse(localStorage.getItem(`ma_lb_${diff}`)||"[]");
+  const list=document.getElementById("lb-list");
+  if(!board.length){list.innerHTML=`<li class="lb-empty">${I18N.t("lbEmpty")}</li>`;return;}
+  const medals=["🥇","🥈","🥉"],cls=["gold","silver","bronze"];
+  list.innerHTML=board.map((e,i)=>`
+    <li class="lb-item ${cls[i]||""} ${e.name===S.name?"me":""}">
+      <span class="lb-rank">${medals[i]||(i+1)+"."}</span>
+      <span class="lb-name">${ZH.esc(e.name)}</span>
+      <span class="lb-theme">${THEMES[e.theme].emoji}</span>
+      <span class="lb-pts">${e.score} ${I18N.t("ptsLabel")}</span>
+    </li>`).join("");
+}
+
+// ════════════════════════════════════════════════════
+// TIMER
+// ════════════════════════════════════════════════════
+function tickStart(secs){
+  clearInterval(S.timer);S.t=secs;
+  const arc=document.getElementById("t-arc"),num=document.getElementById("t-num");
+  const circ=2*Math.PI*24;
+  function tick(){
+    num.textContent=S.t;
+    arc.style.strokeDashoffset=circ*(1-S.t/secs);
+    arc.className="t-fill "+(S.t<=secs*.25?"danger":S.t<=secs*.5?"warn":"");
+    num.className="timer-num "+(S.t<=secs*.25?"danger":"");
+  }
+  tick();
+  S.timer=setInterval(()=>{S.t--;tick();if(S.t<=0){clearInterval(S.timer);timeUp();}},1000);
+}
+
+// ════════════════════════════════════════════════════
+// UI
+// ════════════════════════════════════════════════════
+function show(name){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  document.getElementById("s-"+name).classList.add("active");
+  if(name==="home")updVehicle();
+  window.speechSynthesis&&window.speechSynthesis.cancel();
+}
+function pickTheme(el,t){
+  S.theme=t;
+  document.querySelectorAll(".theme-card").forEach(c=>c.classList.remove("active"));
+  el.classList.add("active");updVehicle();
+}
+function pickDiff(el,d){
+  S.diff=d;
+  document.querySelectorAll(".diff-btn").forEach(b=>b.classList.remove("active"));
+  el.classList.add("active");
+}
+function updVehicle(){document.getElementById("ticker-v").textContent=THEMES[S.theme].vehicle;}
+
+// ════════════════════════════════════════════════════
+// CONFETTI
+// ════════════════════════════════════════════════════
+function confetti(){
+  const cols=["#6c63ff","#f97316","#22c55e","#38bdf8","#f43f5e","#fbbf24"];
+  for(let i=0;i<70;i++)setTimeout(()=>{
+    const el=document.createElement("div");el.className="confetti";
+    el.style.background=cols[r(0,cols.length-1)];el.style.left=r(0,100)+"vw";el.style.top="-20px";
+    el.style.animationDuration=(1+Math.random()*1.2)+"s";el.style.animationDelay=(Math.random()*.6)+"s";
+    document.body.appendChild(el);setTimeout(()=>el.remove(),2500);
+  },i*25);
+}
+
+// ════════════════════════════════════════════════════
+// I18N live-update on language change
+// ════════════════════════════════════════════════════
+I18N.onChange(lang=>{
+  updVehicle();
+  // if mid-game, refresh question text
+  if(document.getElementById("s-game").classList.contains("active")&&S.qs[S.qi]&&!S.answered){
+    const q=S.qs[S.qi];const zh=lang==="zh-tw";
+    document.getElementById("g-story").innerHTML=zh?ZH.annotate(q.s_zh):q.s_en;
+    document.getElementById("g-question").innerHTML="❓ "+(zh?ZH.annotate(q.q_zh):ZH.esc(q.q_en));
+  }
+  document.getElementById("g-score").textContent=`⭐ ${S.score} ${I18N.t("ptsLabel")}`;
+  updHint();updStreak();
+});
+
+// ════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════
+I18N.init();
+updVehicle();
+</script>
+</body>
+</html>
