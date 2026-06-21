@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="#667eea"/>
+      <stop offset="100%" stop-color="#764ba2"/>
+    </linearGradient>
+    <linearGradient id="card" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%"   stop-color="#ffffff" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.07"/>
+    </linearGradient>
+  </defs>
+
+  <!-- background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!-- decorative circles -->
+  <circle cx="60"  cy="60"  r="120" fill="#ffffff" fill-opacity="0.06"/>
+  <circle cx="1160" cy="570" r="160" fill="#ffffff" fill-opacity="0.06"/>
+  <circle cx="1100" cy="80"  r="80"  fill="#ffffff" fill-opacity="0.05"/>
+  <circle cx="100"  cy="560" r="90"  fill="#ffffff" fill-opacity="0.05"/>
+
+  <!-- card -->
+  <rect x="60" y="60" width="1080" height="510" rx="36" fill="url(#card)" stroke="#ffffff" stroke-opacity="0.2" stroke-width="1.5"/>
+
+  <!-- star icon -->
+  <text x="600" y="190" text-anchor="middle" font-size="100" font-family="Segoe UI Emoji,Apple Color Emoji,sans-serif">🌟</text>
+
+  <!-- title EN -->
+  <text x="600" y="285" text-anchor="middle" font-size="68" font-weight="900" font-family="Nunito,Arial Rounded MT Bold,sans-serif" fill="#ffffff">Math Adventure!</text>
+
+  <!-- subtitle EN -->
+  <text x="600" y="345" text-anchor="middle" font-size="30" font-weight="700" font-family="Nunito,Arial Rounded MT Bold,sans-serif" fill="#e0d9ff">Fun math puzzles for young explorers</text>
+
+  <!-- Chinese title -->
+  <text x="600" y="400" text-anchor="middle" font-size="36" font-weight="900" font-family="Noto Sans TC,Apple SD Gothic Neo,sans-serif" fill="#c7d2fe">數學大冒險</text>
+
+  <!-- themes row -->
+  <text x="380" y="490" text-anchor="middle" font-size="64" font-family="Segoe UI Emoji,Apple Color Emoji,sans-serif">✈️</text>
+  <text x="600" y="490" text-anchor="middle" font-size="64" font-family="Segoe UI Emoji,Apple Color Emoji,sans-serif">📦</text>
+  <text x="820" y="490" text-anchor="middle" font-size="64" font-family="Segoe UI Emoji,Apple Color Emoji,sans-serif">🚌</text>
+
+  <!-- url -->
+  <text x="600" y="552" text-anchor="middle" font-size="22" font-weight="700" font-family="Nunito,Arial Rounded MT Bold,sans-serif" fill="#a5b4fc">hsinhoyeh.github.io/math-adventure</text>
+</svg>
